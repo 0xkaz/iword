@@ -2,7 +2,7 @@
 
 **High-speed keyword search with shared memory — one dictionary, many processes.**
 
-Dictionary is loaded once into System V shared memory. All processes (PHP, Python, Go) read from the same in-memory hash table with zero copying and zero network overhead.
+Dictionary is loaded once into System V shared memory. All processes (PHP, Python, Go, Node.js) read from the same in-memory hash table with zero copying and zero network overhead.
 
 [![CI](https://github.com/0xkaz/iword/actions/workflows/ci.yml/badge.svg)](https://github.com/0xkaz/iword/actions/workflows/ci.yml)
 
