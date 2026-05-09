@@ -54,12 +54,15 @@ jobs:
           ./iwordctl dict "${DICT_KEY}" stop
 
       - name: Smoke test - iwordserver (Unix socket)
+        working-directory: tool
         run: |
+          cp -r ../include/* .
+          make iwordserver CFLAGS="-O2 -Wall -Wextra"
           printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/test_dict2.txt
           DICT_KEY="ci-srv-${{ matrix.os }}-$$"
           SOCK=/tmp/iword-ci-${{ matrix.os }}-$$.sock
-          bin/iwordctl dict "${DICT_KEY}" load /tmp/test_dict2.txt
-          bin/iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
+          ./iwordctl dict "${DICT_KEY}" load /tmp/test_dict2.txt
+          ./iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
           SERVER_PID=$!
           sleep 1
           echo '{"op":"ping"}' | nc -U "${SOCK}"
@@ -67,7 +70,7 @@ jobs:
           echo '{"op":"seek","word":"notexist"}' | nc -U "${SOCK}"
           echo '{"op":"map","text":"get free prize now","mode":3}' | nc -U "${SOCK}"
           kill "${SERVER_PID}" || true
-          bin/iwordctl dict "${DICT_KEY}" stop
+          ./iwordctl dict "${DICT_KEY}" stop
           rm -f "${SOCK}"
 
       - name: Check SHM is cleaned up
