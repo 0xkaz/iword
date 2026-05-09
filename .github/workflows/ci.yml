@@ -177,9 +177,15 @@ jobs:
         run: |
           printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/dict.txt
           DICT_KEY="ci-go-$$"
+          SOCK="/tmp/iword-ci-go-$$.sock"
           bin/iwordctl dict "${DICT_KEY}" load /tmp/dict.txt
-          cd bindings/go && IWORD_TEST_KEY="${DICT_KEY}" LD_LIBRARY_PATH="$(pwd)/../../bin" go test -v -race ./...
+          bin/iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
+          SERVER_PID=$!
+          sleep 1
+          cd bindings/go && IWORD_TEST_KEY="${DICT_KEY}" IWORD_SERVER_SOCK="${SOCK}" LD_LIBRARY_PATH="$(pwd)/../../bin" go test -v -race ./...
+          kill "${SERVER_PID}" || true
           cd ../.. && bin/iwordctl dict "${DICT_KEY}" stop
+          rm -f "${SOCK}"
 
   # ---------------------------------------------------------------
   # Job 5: Node.js binding smoke test

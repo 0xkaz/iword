@@ -140,8 +140,12 @@ static slot_node_t *dequeue_blocking(void) {
 
 static void handle_seek(const char *req, char *resp, size_t rsz) {
 	char word[1024] = "";
-	if (!json_str(req, "word", word, sizeof(word)) || !word[0]) {
+	if (!json_str(req, "word", word, sizeof(word))) {
 		snprintf(resp, rsz, "{\"error\":\"missing word\"}\n");
+		return;
+	}
+	if (!word[0]) {
+		snprintf(resp, rsz, "{\"found\":false,\"key\":null}\n");
 		return;
 	}
 	int key = iword_seek(word);
