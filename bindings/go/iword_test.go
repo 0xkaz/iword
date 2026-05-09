@@ -165,6 +165,43 @@ func TestFilterTextPreservesLength(t *testing.T) {
 	}
 }
 
+// ---- SetDictKey ---------------------------------------------------------
+
+func TestSetDictKeyIsolation(t *testing.T) {
+	// Switch to a non-existent dict key — words from the test dictionary
+	// must not be visible under a different key.
+	originalKey := os.Getenv("IWORD_TEST_KEY")
+
+	iword.SetDictKey("__nonexistent_key_xyz__")
+	got := iword.Seek("free")
+	// Restore before any assertion so a failure doesn't break subsequent tests
+	if originalKey != "" {
+		iword.SetDictKey(originalKey)
+	} else {
+		iword.SetDictKey("")
+	}
+
+	if got != -1 {
+		t.Errorf("Seek(\"free\") under unknown dict key = %d, want -1 (no dict loaded)", got)
+	}
+}
+
+func TestSetDictKeyRestore(t *testing.T) {
+	// After switching away and back, the original dictionary must be reachable.
+	originalKey := os.Getenv("IWORD_TEST_KEY")
+
+	iword.SetDictKey("__nonexistent_key_xyz__")
+	if originalKey != "" {
+		iword.SetDictKey(originalKey)
+	} else {
+		iword.SetDictKey("")
+	}
+
+	if got := iword.Seek("free"); got != iword.KeySpam {
+		t.Errorf("Seek(\"free\") after restoring dict key = %d, want %d (KeySpam)", got, iword.KeySpam)
+	}
+}
+
 // ---- Seek edge cases ----------------------------------------------------
 
 func TestSeekCaseSensitive(t *testing.T) {
