@@ -317,11 +317,11 @@ int iword_load(char *filename) {
 	size = ftell(fp);
 	fseek(fp, 0L, SEEK_SET);
 	// サイズが不正でないかの確認
-	if (size <= 0) return -1;
+	if (size <= 0) { fclose(fp); return -1; }
 	// サイズ分だけ領域を取得
 	data = (char *)malloc(size + 1);
 	// 領域の取得に失敗したら
-	if (data == NULL) return fclose(fp), -1;
+	if (data == NULL) { fclose(fp); return -1; }
 	// ファイル全体を一気に読み込む
 	fread(data, size, 1, fp);
 	// ファイルを閉じる

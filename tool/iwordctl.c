@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 	if (strcmp(argv[1], "load") == 0) {
-		char tmppath[32] = "";
+		char tmppath[32] = ""; char *path = argv[2];
 		if (argc < 3) goto usage;
 		if (argc != 3) {
 			int q = 9, p = 2; FILE *fw;
@@ -106,15 +106,15 @@ int main(int argc, char **argv) {
 				fputc('\n', fw);
 			}
 			fclose(fw);
-			argv[2] = tmppath;
+			path = tmppath;
 		}
-		fp = fopen(argv[2], "r");
+		fp = fopen(path, "r");
 		if (!fp) {
-			printf("Error: No such file: %s\n", argv[2]);
+			printf("Error: No such file: %s\n", path);
 			return 1;
 		}
 		fclose(fp);
-		if (iword_load(argv[2])) {
+		if (iword_load(path)) {
 			printf("Error: Load failed. "
 			 "%d KB of the ipc memory should be free.\n",
 			 (iword_needed_size() + 4095) / 4096 * 4);
