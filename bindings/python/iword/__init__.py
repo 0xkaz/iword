@@ -148,4 +148,6 @@ __all__ = [
     "Match",
     "MODE_HTML", "MODE_FORBID", "MODE_ENGLISH",
     "KEY_HIDDEN", "KEY_ADULT", "KEY_SPAM", "KEY_DEFAULT",
+    # iwordserver client (no shared library required)
+    "server",
 ]
