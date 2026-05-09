@@ -7,7 +7,7 @@ iWord Test
 #include "iword.h"
 
 int main(int argc, char **argv) {
-	FILE *fp; int size, i, j, k; char *data, *p; long long *ret;
+	FILE *fp; int size, i, j, k; char *data; long long *ret;
 	
 	if (argc != 2) {
 		printf("Usage: iwordtest file\n");
