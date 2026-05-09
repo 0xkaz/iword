@@ -152,6 +152,14 @@ jobs:
           go vet .
           echo "Go binding build and vet passed"
 
+      - name: Load dictionary and run Go tests
+        run: |
+          printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/dict.txt
+          DICT_KEY="ci-go-$$"
+          bin/iwordctl dict "${DICT_KEY}" load /tmp/dict.txt
+          cd bindings/go && IWORD_TEST_KEY="${DICT_KEY}" LD_LIBRARY_PATH="$(pwd)/../../bin" go test -v ./...
+          cd ../.. && bin/iwordctl dict "${DICT_KEY}" stop
+
   # ---------------------------------------------------------------
   # Job 5: Node.js binding smoke test
   # ---------------------------------------------------------------

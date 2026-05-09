@@ -9,7 +9,7 @@ package iword
 
 /*
 #cgo CFLAGS: -I../../include
-#cgo LDFLAGS: -L../../bin/modules -liword -lc
+#cgo LDFLAGS: -L../../bin -liword -lc
 
 #include "iword.h"
 #include <stdlib.h>
