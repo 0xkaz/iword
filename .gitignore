@@ -23,6 +23,10 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Python package build artifacts
+bindings/python/dist/
+bindings/python/*.egg-info/
+
 # Node.js
 bindings/node/node_modules/
 bindings/node/build/
