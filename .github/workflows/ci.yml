@@ -150,6 +150,7 @@ jobs:
         run: |
           go build .
           go vet .
+          go build -v example_router.go
           echo "Go binding build and vet passed"
 
       - name: Load dictionary and run Go tests
