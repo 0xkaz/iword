@@ -85,6 +85,24 @@ jobs:
           ./iwordctl dict "${DICT_KEY}" stop
           rm -f "${SOCK}"
 
+      - name: AddressSanitizer - iwordserver memory check
+        working-directory: tool
+        run: |
+          cp -r ../include/* .
+          make iwordserver CFLAGS="-O2 -fsanitize=address -g"
+          printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/test_asan.txt
+          DICT_KEY="ci-asan-${{ matrix.os }}-$$"
+          SOCK=/tmp/iword-asan-${{ matrix.os }}-$$.sock
+          ./iwordctl dict "${DICT_KEY}" load /tmp/test_asan.txt
+          ASAN_OPTIONS=detect_leaks=0 ./iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
+          SERVER_PID=$!
+          sleep 1
+          python3 /tmp/iword_smoke.py "${SOCK}"
+          kill "${SERVER_PID}" || true
+          wait "${SERVER_PID}" 2>/dev/null || true
+          ./iwordctl dict "${DICT_KEY}" stop
+          rm -f "${SOCK}"
+
       - name: Check SHM is cleaned up
         run: |
           # Warn if any SHM segments remain after the test

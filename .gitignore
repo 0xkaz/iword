@@ -30,3 +30,6 @@ bindings/python/*.egg-info/
 # Node.js
 bindings/node/node_modules/
 bindings/node/build/
+
+# Go build outputs
+bindings/go/example_router
