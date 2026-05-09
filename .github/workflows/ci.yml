@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y gcc make cppcheck
 
-      - name: Build iwordctl and iworduse
+      - name: Build iwordctl, iworduse and iwordserver
         working-directory: tool
         run: |
           cp -r ../include/* .
@@ -38,7 +38,7 @@ jobs:
             --error-exitcode=1 \
             --suppress=variableScope \
             --suppress=invalidPointerCast \
-            include/iword.c tool/iwordctl.c tool/iworduse.c
+            include/iword.c tool/iwordctl.c tool/iworduse.c tool/iwordserver.c
 
       - name: Smoke test - load and seek
         working-directory: tool
@@ -52,6 +52,23 @@ jobs:
           ./iwordctl dict "${DICT_KEY}" seek notexist || true
           ./iwordctl dict "${DICT_KEY}" status
           ./iwordctl dict "${DICT_KEY}" stop
+
+      - name: Smoke test - iwordserver (Unix socket)
+        run: |
+          printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/test_dict2.txt
+          DICT_KEY="ci-srv-${{ matrix.os }}-$$"
+          SOCK=/tmp/iword-ci-${{ matrix.os }}-$$.sock
+          bin/iwordctl dict "${DICT_KEY}" load /tmp/test_dict2.txt
+          bin/iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
+          SERVER_PID=$!
+          sleep 1
+          echo '{"op":"ping"}' | nc -U "${SOCK}"
+          echo '{"op":"seek","word":"free"}' | nc -U "${SOCK}"
+          echo '{"op":"seek","word":"notexist"}' | nc -U "${SOCK}"
+          echo '{"op":"map","text":"get free prize now","mode":3}' | nc -U "${SOCK}"
+          kill "${SERVER_PID}" || true
+          bin/iwordctl dict "${DICT_KEY}" stop
+          rm -f "${SOCK}"
 
       - name: Check SHM is cleaned up
         run: |

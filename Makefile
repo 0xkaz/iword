@@ -23,7 +23,7 @@ _pecl:
 	-cp -r temp_pecl/modules bin; rm -r -f -d temp_pecl
 
 tool: _tool
-_tool: iwordctl iworduse iwordtest
+_tool: iwordctl iworduse iwordserver iwordtest
 
 iwordtest:
 	-mkdir bin 2>/dev/null
@@ -48,6 +48,16 @@ iworduse:
 	-mkdir bin 2>/dev/null
 	-cp temp_use/iwordctl temp_use/iworduse bin
 	-rm -r -f -d temp_use
+
+iwordserver:
+	-rm -r -f -d temp_server
+	-mkdir temp_server
+	-cp -r tool/* temp_server
+	cp -r include/* temp_server
+	cd temp_server; make iwordserver
+	-mkdir bin 2>/dev/null
+	-cp temp_server/iwordserver bin
+	-rm -r -f -d temp_server
 
 # Python binding: no build step needed (ctypes loads libiword.so directly)
 python: _lib
