@@ -65,10 +65,23 @@ jobs:
           ./iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
           SERVER_PID=$!
           sleep 1
-          echo '{"op":"ping"}' | nc -U "${SOCK}"
-          echo '{"op":"seek","word":"free"}' | nc -U "${SOCK}"
-          echo '{"op":"seek","word":"notexist"}' | nc -U "${SOCK}"
-          echo '{"op":"map","text":"get free prize now","mode":3}' | nc -U "${SOCK}"
+          python3 - "${SOCK}" <<'PYEOF'
+import socket, json, sys
+sock_path = sys.argv[1]
+ops = [
+    {"op": "ping"},
+    {"op": "seek", "word": "free"},
+    {"op": "seek", "word": "notexist"},
+    {"op": "map", "text": "get free prize now", "mode": 3},
+]
+for op in ops:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(sock_path)
+    s.sendall((json.dumps(op) + "\n").encode())
+    resp = json.loads(s.makefile().readline())
+    print(op["op"], "->", resp)
+    s.close()
+PYEOF
           kill "${SERVER_PID}" || true
           ./iwordctl dict "${DICT_KEY}" stop
           rm -f "${SOCK}"
