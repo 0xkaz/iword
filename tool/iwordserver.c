@@ -375,12 +375,15 @@ int main(int argc, char **argv) {
 				close(ufd);
 			} else {
 				listener_arg_t *la = malloc(sizeof(*la));
-				la->fd = ufd;
-				pthread_t t;
-				pthread_create(&t, NULL, unix_listener, la);
-				pthread_detach(t);
-				fprintf(stderr, "iword-server: listening on %s (unix)\n", unix_path);
-				started++;
+				if (!la) { close(ufd); perror("malloc"); }
+				else {
+					la->fd = ufd;
+					pthread_t t;
+					pthread_create(&t, NULL, unix_listener, la);
+					pthread_detach(t);
+					fprintf(stderr, "iword-server: listening on %s (unix)\n", unix_path);
+					started++;
+				}
 			}
 		}
 	}
@@ -403,12 +406,15 @@ int main(int argc, char **argv) {
 				close(tfd);
 			} else {
 				listener_arg_t *la = malloc(sizeof(*la));
-				la->fd = tfd;
-				pthread_t t;
-				pthread_create(&t, NULL, tcp_listener, la);
-				pthread_detach(t);
-				fprintf(stderr, "iword-server: listening on TCP port %d\n", tcp_port);
-				started++;
+				if (!la) { close(tfd); perror("malloc"); }
+				else {
+					la->fd = tfd;
+					pthread_t t;
+					pthread_create(&t, NULL, tcp_listener, la);
+					pthread_detach(t);
+					fprintf(stderr, "iword-server: listening on TCP port %d\n", tcp_port);
+					started++;
+				}
 			}
 		}
 	}
