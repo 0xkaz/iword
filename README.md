@@ -82,6 +82,19 @@ clean   = filter_text(text, MODE_HTML | MODE_FORBID) # replace matched words wit
 See [`bindings/python/example_langchain.py`](bindings/python/example_langchain.py) for LangChain/LlamaIndex integration examples.  
 See [`bindings/python/example_rag.py`](bindings/python/example_rag.py) for RAG pre-processing examples.
 
+## Node.js Binding
+
+```javascript
+const iword = require('./bindings/node/iword');
+
+iword.load('words.txt');                                   // load dictionary into SHM
+const key     = iword.seek('spam_word');                   // -1 if not found
+const matches = iword.map(text, iword.MODE_HTML | iword.MODE_FORBID);
+const clean   = iword.filterText(text, iword.MODE_HTML | iword.MODE_FORBID);
+```
+
+**Requirements:** `npm install` in `bindings/node/` (installs `ffi-napi`, `ref-napi`).
+
 ## Go Binding
 
 ```go
@@ -139,8 +152,7 @@ bin/iwordctl stop
 - For Kubernetes: use `emptyDir: { medium: Memory }` to share SHM between containers in a pod.
 - For AWS ECS: `sharedMemorySize` in `linuxParameters` covers `/dev/shm` (POSIX), not System V SHM. A sidecar container running `iwordctl` is required.
 
-## License
+## Credits
 
-Originally developed by [@freaks / imos](http://imoz.jp/document/iword/).  
-Maintained at [atfreaks/iword](https://github.com/atfreaks/iword).  
+Originally developed by [imos](http://imoz.jp/document/iword/).  
 Multi-language bindings and extensions by [0xkaz](https://github.com/0xkaz).

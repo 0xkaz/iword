@@ -22,3 +22,7 @@ tool/iworduse
 __pycache__/
 *.pyc
 *.pyo
+
+# Node.js
+bindings/node/node_modules/
+bindings/node/build/

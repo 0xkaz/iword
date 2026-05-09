@@ -1,0 +1,22 @@
+{
+  "name": "iword",
+  "version": "0.1.0",
+  "description": "Node.js binding for iWord — high-speed keyword search via shared memory",
+  "main": "index.js",
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "test": "node test_basic.js"
+  },
+  "dependencies": {
+    "ffi-napi": "^4.0.3",
+    "ref-napi": "^3.0.3"
+  },
+  "devDependencies": {
+    "node-gyp": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": ["iword", "keyword", "search", "shared-memory", "content-filter"],
+  "license": "MIT"
+}
