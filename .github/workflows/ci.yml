@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y gcc make cppcheck
 
-      - name: Build iwordctl and iworduse
+      - name: Build iwordctl, iworduse and iwordserver
         working-directory: tool
         run: |
           cp -r ../include/* .
@@ -38,7 +38,7 @@ jobs:
             --error-exitcode=1 \
             --suppress=variableScope \
             --suppress=invalidPointerCast \
-            include/iword.c tool/iwordctl.c tool/iworduse.c
+            include/iword.c tool/iwordctl.c tool/iworduse.c tool/iwordserver.c
 
       - name: Smoke test - load and seek
         working-directory: tool
@@ -52,6 +52,38 @@ jobs:
           ./iwordctl dict "${DICT_KEY}" seek notexist || true
           ./iwordctl dict "${DICT_KEY}" status
           ./iwordctl dict "${DICT_KEY}" stop
+
+      - name: Write iwordserver smoke test script
+        run: |
+          printf '%s\n' \
+            'import socket, json, sys' \
+            'sock_path = sys.argv[1]' \
+            'ops = [{"op":"ping"},{"op":"seek","word":"free"},{"op":"seek","word":"notexist"},{"op":"map","text":"get free prize now","mode":3}]' \
+            'for op in ops:' \
+            '    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)' \
+            '    s.connect(sock_path)' \
+            '    s.sendall((json.dumps(op) + chr(10)).encode())' \
+            '    resp = json.loads(s.makefile().readline())' \
+            '    print(op["op"], "->", resp)' \
+            '    s.close()' \
+            > /tmp/iword_smoke.py
+
+      - name: Smoke test - iwordserver (Unix socket)
+        working-directory: tool
+        run: |
+          cp -r ../include/* .
+          make iwordserver CFLAGS="-O2 -Wall -Wextra"
+          printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/test_dict2.txt
+          DICT_KEY="ci-srv-${{ matrix.os }}-$$"
+          SOCK=/tmp/iword-ci-${{ matrix.os }}-$$.sock
+          ./iwordctl dict "${DICT_KEY}" load /tmp/test_dict2.txt
+          ./iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
+          SERVER_PID=$!
+          sleep 1
+          python3 /tmp/iword_smoke.py "${SOCK}"
+          kill "${SERVER_PID}" || true
+          ./iwordctl dict "${DICT_KEY}" stop
+          rm -f "${SOCK}"
 
       - name: Check SHM is cleaned up
         run: |
@@ -157,9 +189,15 @@ jobs:
         run: |
           printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/dict.txt
           DICT_KEY="ci-go-$$"
+          SOCK="/tmp/iword-ci-go-$$.sock"
           bin/iwordctl dict "${DICT_KEY}" load /tmp/dict.txt
-          cd bindings/go && IWORD_TEST_KEY="${DICT_KEY}" LD_LIBRARY_PATH="$(pwd)/../../bin" go test -v -race ./...
+          bin/iwordserver -u "${SOCK}" -p 0 -d "${DICT_KEY}" &
+          SERVER_PID=$!
+          sleep 1
+          cd bindings/go && IWORD_TEST_KEY="${DICT_KEY}" IWORD_SERVER_SOCK="${SOCK}" LD_LIBRARY_PATH="$(pwd)/../../bin" go test -v -race ./...
+          kill "${SERVER_PID}" || true
           cd ../.. && bin/iwordctl dict "${DICT_KEY}" stop
+          rm -f "${SOCK}"
 
   # ---------------------------------------------------------------
   # Job 5: Node.js binding smoke test
