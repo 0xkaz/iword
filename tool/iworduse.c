@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
 	size = ftell(fp);
 	fseek(fp, 0L, SEEK_SET);
 	data = (char *)malloc(size + 1);
+	if (!data) { fclose(fp); printf("Error: malloc failed\n"); return 1; }
 	fread(data, size, 1, fp);
 	data[size] = 0;
 	fclose(fp);

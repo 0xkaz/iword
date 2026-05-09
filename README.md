@@ -12,8 +12,9 @@ Dictionary is loaded once into System V shared memory. All processes (PHP, Pytho
 - **O(N) rolling hash scan** — single-pass text scan, finds all matching words
 - **Multi-category** — each word carries a category key (0–14); spam, adult, hidden, custom
 - **HTML-aware** — skips tags and decodes entities during scan
-- **Multi-language** — PHP PECL extension, Python (ctypes), Go (cgo), Node.js (N-API)
-- **CLI tools** — `iwordctl` for dictionary load/seek/status, with `--json` output
+- **Multi-language** — PHP PECL extension, Python (ctypes), Go (CGO + iwordserver client), Node.js (N-API)
+- **iword-server** — Unix socket + TCP server for language-agnostic access (no CGO required)
+- **CLI tools** — `iwordctl` for dictionary load/seek/status, `iwordserver` for server mode
 
 ## Quick Start
 
@@ -59,7 +60,7 @@ bin/iwordctl dict medical stop
 **Requirements:** GCC, Make. `phpize` only needed for PHP extension.
 
 ```bash
-make tool   # CLI tools → bin/iwordctl, bin/iworduse
+make tool   # CLI tools → bin/iwordctl, bin/iworduse, bin/iwordserver
 make lib    # Shared library → bin/libiword.so (Python/Go/Node bindings)
 make        # Both of the above (default)
 make full   # tool + lib + PHP extension (requires phpize)
@@ -98,16 +99,65 @@ const clean   = iword.filterText(text, iword.MODE_HTML | iword.MODE_FORBID);
 
 ## Go Binding
 
+Two integration paths are available:
+
+**iwordserver client (recommended)** — connects to a running `iwordserver` process via Unix socket or TCP. No CGO, no thread-safety concerns.
+
+```go
+import iword "github.com/0xkaz/iword/bindings/go"
+
+c, err := iword.NewClient("unix", "/tmp/iword.sock")
+defer c.Close()
+
+key, _     := c.Seek("spam_word")                         // -1 if not found
+matches, _ := c.Map(text, iword.ModeHTML|iword.ModeForbid)
+clean, _   := c.FilterText(text, iword.ModeHTML|iword.ModeForbid)
+```
+
+**CGO direct call (performance-critical only)** — calls iword C library in-process. Requires `sync.Mutex` because `iword_seek`/`iword_map` are not thread-safe.
+
 ```go
 import iword "github.com/0xkaz/iword/bindings/go"
 
 iword.Load("words.txt")
 key     := iword.Seek("spam_word")                        // -1 if not found
 matches := iword.Map(text, iword.ModeHTML|iword.ModeForbid)
-clean   := iword.FilterText(text, iword.ModeHTML)
+clean   := iword.FilterText(text, iword.ModeHTML|iword.ModeForbid)
 ```
 
 See [`bindings/go/example_router.go`](bindings/go/example_router.go) for a routing server example.
+
+## iword-server
+
+A standalone server that exposes iword over Unix socket and TCP using a newline-delimited JSON protocol. Any language can connect without CGO or FFI.
+
+```bash
+# Start server (dictionary must be loaded first)
+bin/iwordctl load words.txt
+bin/iwordserver -u /tmp/iword.sock -p 7743
+
+# Options
+#   -u PATH   Unix socket path (default: /tmp/iword.sock)
+#   -p PORT   TCP port (default: 7743; -p 0 to disable)
+#   -d KEY    Dictionary key (for multiple dictionaries)
+#   -n        Disable Unix socket
+```
+
+**Protocol** — send one JSON object per line, receive one JSON response per line:
+
+```bash
+# seek
+echo '{"op":"seek","word":"spam_word"}' | nc -U /tmp/iword.sock
+# → {"found":true,"key":2}
+
+# map
+echo '{"op":"map","text":"get free prize now","mode":3}' | nc -U /tmp/iword.sock
+# → {"matches":[{"pos":4,"len":4,"key":2},{"pos":9,"len":5,"key":2}],"mask":4}
+
+# other ops: ping, mask, status
+```
+
+See [`_iword-server-spec-en.md`](_iword-server-spec-en.md) for the full protocol specification.
 
 ## PHP Extension
 
