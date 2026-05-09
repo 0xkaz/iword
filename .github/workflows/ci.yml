@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # ---------------------------------------------------------------
+  # Job 1: Build C core library and CLI tools, run smoke test
+  # ---------------------------------------------------------------
+  build-c:
+    name: C build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc make cppcheck
+
+      - name: Build iwordctl and iworduse
+        working-directory: tool
+        run: |
+          cp -r ../include/* .
+          # -Werror will be added after P2 (fix/security) is resolved.
+          # Known warnings: NULL return in iword_mask(), operator precedence in iword_ischar(), etc.
+          make all CFLAGS="-O2 -Wall -Wextra"
+
+      - name: Static analysis (cppcheck)
+        run: |
+          cppcheck --enable=warning,performance,portability \
+            --error-exitcode=1 \
+            --suppress=variableScope \
+            --suppress=invalidPointerCast \
+            include/iword.c tool/iwordctl.c tool/iworduse.c
+
+      - name: Smoke test - load and seek
+        working-directory: tool
+        run: |
+          # Use a unique dict key to avoid SHM collisions between parallel jobs
+          printf "apple\tA\nbanana\tA\nspam_word\t2\nadult_word\t1\n" > /tmp/test_dict.txt
+          DICT_KEY="ci-${{ matrix.os }}-$$"
+          ./iwordctl dict "${DICT_KEY}" load /tmp/test_dict.txt
+          ./iwordctl dict "${DICT_KEY}" seek apple
+          ./iwordctl dict "${DICT_KEY}" seek banana
+          ./iwordctl dict "${DICT_KEY}" seek notexist || true
+          ./iwordctl dict "${DICT_KEY}" status
+          ./iwordctl dict "${DICT_KEY}" stop
+
+      - name: Check SHM is cleaned up
+        run: |
+          # Warn if any SHM segments remain after the test
+          ipcs -m | grep -v "^--\|^key\|^$" && echo "Warning: SHM segments remain" || echo "SHM clean"
+
+  # ---------------------------------------------------------------
+  # Job 2: Build PHP PECL extension (matrix)
+  #   PHP 7.4: expected to succeed
+  #   PHP 8.x: expected to fail (tracked in fix/php8-compat)
+  #   Failures do not block the overall workflow (continue-on-error)
+  # ---------------------------------------------------------------
+  build-php:
+    name: PHP ${{ matrix.php }} build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        php:
+          - "7.4"
+          - "8.0"
+          - "8.1"
+          - "8.2"
+          - "8.3"
+          - "8.4"
+        exclude:
+          # PHP 7.4 is not available in the official repos for ubuntu-24.04
+          - os: ubuntu-24.04
+            php: "7.4"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: phpize
+
+      - name: Build PECL extension
+        id: build
+        # PHP 8.x build errors are expected; do not fail the workflow
+        continue-on-error: ${{ matrix.php != '7.4' }}
+        run: |
+          mkdir temp_pecl
+          cp -r pecl/* temp_pecl/
+          mkdir temp_pecl/include
+          cp -r include/* temp_pecl/include/
+          cd temp_pecl
+          phpize
+          ./configure
+          make -j$(nproc)
+
+      - name: Report build result
+        run: |
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            echo "✅ PHP ${{ matrix.php }}: Build succeeded"
+          else
+            echo "❌ PHP ${{ matrix.php }}: Build failed (known issue for PHP 8.x - tracked in fix/php8-compat)"
+          fi
+
+  # ---------------------------------------------------------------
+  # Job 3: Summary — block merge if C build fails
+  # ---------------------------------------------------------------
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [build-c, build-php]
+    if: always()
+    steps:
+      - name: Check C build result
+        run: |
+          if [ "${{ needs.build-c.result }}" = "success" ]; then
+            echo "✅ C core build: passed"
+          else
+            echo "❌ C core build: FAILED"
+            exit 1
+          fi
