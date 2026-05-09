@@ -93,7 +93,7 @@ const matches = iword.map(text, iword.MODE_HTML | iword.MODE_FORBID);
 const clean   = iword.filterText(text, iword.MODE_HTML | iword.MODE_FORBID);
 ```
 
-**Requirements:** `npm install` in `bindings/node/` (installs `ffi-napi`, `ref-napi`).
+**Requirements:** `make lib && npm run build` in `bindings/node/` (builds N-API native addon).
 
 ## Go Binding
 

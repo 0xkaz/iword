@@ -172,9 +172,9 @@ jobs:
       - name: Build C library
         run: make tool && make lib
 
-      - name: Install Node.js binding dependencies
+      - name: Build N-API addon
         working-directory: bindings/node
-        run: npm install
+        run: npm run build
 
       - name: Load dictionary and run binding tests
         run: |

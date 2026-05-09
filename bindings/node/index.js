@@ -1,62 +1,36 @@
 'use strict';
 /**
- * iWord Node.js binding — auto-selects N-API addon or ffi-napi fallback.
+ * iWord Node.js binding via N-API native addon.
  *
- * Priority:
- *   1. N-API native addon (build/Release/iword_napi.node) — Node 16+, no extra deps
- *   2. ffi-napi wrapper (iword.js) — requires `npm install`, Node 16-20 only
- *
- * Build N-API addon:  npm run build  (requires make lib first)
- * Install ffi-napi:   npm install
+ * Build: npm run build  (requires `make lib` first)
+ * Use:   const iword = require('./bindings/node');
  */
 
 const path = require('path');
-const fs   = require('fs');
+const addon = require(path.resolve(__dirname, 'build/Release/iword_napi.node'));
 
-const NAPI_ADDON = path.resolve(__dirname, 'build/Release/iword_napi.node');
-
-let _native;
-
-function loadNative() {
-  if (_native) return _native;
-
-  // Try N-API addon first
-  if (fs.existsSync(NAPI_ADDON)) {
-    _native = require(NAPI_ADDON);
-    return _native;
-  }
-
-  // Fall back to ffi-napi wrapper
-  try {
-    _native = require('./iword.js');
-    return _native;
-  } catch (e) {
-    throw new Error(
-      'iWord: no binding available.\n' +
-      '  Option 1 (recommended): make lib && npm run build\n' +
-      '  Option 2 (Node 16-20):  make lib && npm install\n' +
-      `  (N-API addon path: ${NAPI_ADDON})\n` +
-      `  (Original error: ${e.message})`
-    );
-  }
-}
-
-// Mode flags and category key constants (same values regardless of backend)
+// Mode flags (mirrors include/iword.h)
 const MODE_HTML    = 0x1;
 const MODE_FORBID  = 0x2;
 const MODE_ENGLISH = 0x4;
-const KEY_HIDDEN   = 0;
-const KEY_ADULT    = 1;
-const KEY_SPAM     = 2;
-const KEY_DEFAULT  = 9;
 
-function load(filename)           { return loadNative().load(filename); }
-function unload()                 { return loadNative().unload(); }
-function seek(word)               { return loadNative().seek(word); }
-function map(text, mode)          { return loadNative().map(text, mode !== undefined ? mode : MODE_HTML | MODE_FORBID); }
-function mask()                   { return loadNative().mask(); }
-function setLimit(n)              { return loadNative().setLimit(n); }
-function setDictKey(key)          { return loadNative().setDictKey(key); }
+// Category key constants
+const KEY_HIDDEN  = 0;
+const KEY_ADULT   = 1;
+const KEY_SPAM    = 2;
+const KEY_DEFAULT = 9;
+
+function load(filename)  { return addon.load(filename); }
+function unload()        { return addon.unload(); }
+function seek(word)      { return addon.seek(word); }
+function mask()          { return addon.mask(); }
+function setLimit(n)     { return addon.setLimit(n); }
+function setDictKey(key) { return addon.setDictKey(key); }
+
+function map(text, mode) {
+  if (mode === undefined) mode = MODE_HTML | MODE_FORBID;
+  return addon.map(text, mode);
+}
 
 function filterText(text, mode) {
   if (mode === undefined) mode = MODE_HTML | MODE_FORBID;
