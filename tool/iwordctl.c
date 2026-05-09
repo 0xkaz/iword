@@ -75,10 +75,11 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 	if (strcmp(argv[1], "load") == 0) {
+		char tmppath[32] = "";
 		if (argc < 3) goto usage;
 		if (argc != 3) {
 			int q = 9, p = 2; FILE *fw;
-			char tmppath[] = "/tmp/iword.XXXXXX";
+			strncpy(tmppath, "/tmp/iword.XXXXXX", sizeof(tmppath) - 1);
 			int tmpfd = mkstemp(tmppath);
 			if (tmpfd == -1 || !(fw = fdopen(tmpfd, "w"))) {
 				printf("Error: failed to create temporary file.\n");
