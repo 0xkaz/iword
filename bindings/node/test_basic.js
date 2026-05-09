@@ -54,7 +54,7 @@ assert(clean === 'hello world',        'filterText: clean text unchanged');
 
 // --- extractByKey ---
 console.log('\nextractByKey:');
-const spamOnly = iword.extractByKey('Get free prize apple', iword.KEY_SPAM, iword.MODE_HTML);
+const spamOnly = iword.extractByKey('Get free prize apple', iword.KEY_SPAM, iword.MODE_HTML | iword.MODE_FORBID);
 assert(spamOnly.every(m => m.key === iword.KEY_SPAM), 'extractByKey: only KEY_SPAM returned');
 assert(spamOnly.length > 0,                           'extractByKey: found spam matches');
 

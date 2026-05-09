@@ -54,7 +54,7 @@ assert_ok(clean == "hello world",        "filter_text: clean text unchanged")
 
 # --- extract_by_key ---
 print("\nextract_by_key:")
-spam_matches = extract_by_key("get spam and apple", KEY_SPAM, MODE_HTML)
+spam_matches = extract_by_key("get spam and apple", KEY_SPAM, MODE_HTML | MODE_FORBID)
 assert_ok(all(m.key == KEY_SPAM for m in spam_matches), "extract_by_key: only KEY_SPAM returned")
 assert_ok(len(spam_matches) > 0,         "extract_by_key: found spam matches")
 
