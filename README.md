@@ -12,7 +12,7 @@ Dictionary is loaded once into System V shared memory. All processes (PHP, Pytho
 - **O(N) rolling hash scan** — single-pass text scan, finds all matching words
 - **Multi-category** — each word carries a category key (0–14); spam, adult, hidden, custom
 - **HTML-aware** — skips tags and decodes entities during scan
-- **Multi-language** — PHP PECL extension, Python (ctypes), Go (cgo)
+- **Multi-language** — PHP PECL extension, Python (ctypes), Go (cgo), Node.js (N-API)
 - **CLI tools** — `iwordctl` for dictionary load/seek/status, with `--json` output
 
 ## Quick Start
@@ -20,7 +20,7 @@ Dictionary is loaded once into System V shared memory. All processes (PHP, Pytho
 ```bash
 # Build CLI tools and shared library
 make tool   # → bin/iwordctl, bin/iworduse
-make lib    # → bin/libiword.so  (for Python/Go)
+make lib    # → bin/libiword.so  (for Python/Go/Node)
 
 # Load a dictionary
 bin/iwordctl load words.txt
@@ -60,7 +60,7 @@ bin/iwordctl dict medical stop
 
 ```bash
 make tool   # CLI tools → bin/iwordctl, bin/iworduse
-make lib    # Shared library → bin/libiword.so (Python/Go bindings)
+make lib    # Shared library → bin/libiword.so (Python/Go/Node bindings)
 make pecl   # PHP extension → bin/modules/iword.so
 make        # All of the above
 make clean
@@ -85,7 +85,7 @@ See [`bindings/python/example_rag.py`](bindings/python/example_rag.py) for RAG p
 ## Node.js Binding
 
 ```javascript
-const iword = require('./bindings/node/iword');
+const iword = require('./bindings/node');
 
 iword.load('words.txt');                                   // load dictionary into SHM
 const key     = iword.seek('spam_word');                   // -1 if not found
