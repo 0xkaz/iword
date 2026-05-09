@@ -60,7 +60,7 @@ bin/iwordctl dict medical stop
 
 ```bash
 make tool   # CLI tools → bin/iwordctl, bin/iworduse
-make lib    # Shared library → bin/libiword.so (Python/Go bindings)
+make lib    # Shared library → bin/libiword.so (Python/Go/Node bindings)
 make pecl   # PHP extension → bin/modules/iword.so
 make        # All of the above
 make clean
