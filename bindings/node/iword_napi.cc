@@ -9,8 +9,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-// iWord core header (relative to build context; binding.gyp sets include_dirs)
+// iWord core header — wrap in extern "C" to prevent C++ name mangling
+extern "C" {
 #include "iword.h"
+}
 
 // ---- helpers ----------------------------------------------------------------
 
