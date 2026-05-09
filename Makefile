@@ -3,6 +3,12 @@ CFLAGS = -O2
 
 all: _pecl _tool
 
+lib: _lib
+_lib:
+	-mkdir bin 2>/dev/null
+	$(CC) $(CFLAGS) -shared -fPIC -o bin/libiword.so include/iword.c
+	@echo "Built bin/libiword.so (for Python/Go ctypes bindings)"
+
 pecl: _pecl
 _pecl:
 	-rm -r -f -d temp_pecl; mkdir temp_pecl

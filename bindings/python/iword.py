@@ -9,11 +9,11 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
-# Locate iword.so relative to this file
+# Locate libiword.so (built by `make lib`) relative to this file
 _SO_CANDIDATES = [
-    os.path.join(os.path.dirname(__file__), "../../bin/modules/iword.so"),
-    os.path.join(os.path.dirname(__file__), "../../bin/modules/iword.dylib"),
-    "/usr/local/lib/iword.so",
+    os.path.join(os.path.dirname(__file__), "../../bin/libiword.so"),
+    os.path.join(os.path.dirname(__file__), "../../bin/libiword.dylib"),
+    "/usr/local/lib/libiword.so",
 ]
 
 def _load_lib():
@@ -22,7 +22,7 @@ def _load_lib():
         if os.path.exists(path):
             return ctypes.CDLL(path)
     raise OSError(
-        "iword shared library not found. Run 'make pecl' to build, "
+        "iword shared library not found. Run 'make lib' to build bin/libiword.so, "
         "or set the library path manually."
     )
 

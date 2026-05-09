@@ -127,7 +127,7 @@ jobs:
         run: sudo apt-get install -y gcc make python3
 
       - name: Build C library
-        run: make tool && make pecl
+        run: make tool && make lib
 
       - name: Load dictionary and run binding tests
         run: |
@@ -155,7 +155,7 @@ jobs:
           go-version: "1.22"
 
       - name: Build C library
-        run: make tool && make pecl
+        run: make tool && make lib
 
       - name: Build and vet Go binding
         working-directory: bindings/go
