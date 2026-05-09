@@ -167,27 +167,38 @@ func TestFilterTextPreservesLength(t *testing.T) {
 
 // ---- Concurrency --------------------------------------------------------
 //
-// iword_map() uses internal globals. These tests document the current
-// behavior under concurrent access so igate can decide whether to add
-// a Mutex around Map() calls.
+// IMPORTANT FINDING: iword_seek() and iword_map() are NOT thread-safe.
+// Concurrent calls without a Mutex cause SIGSEGV (confirmed in CI with -race).
 //
-// Run with: go test -race ./bindings/go/
+// igate MUST serialize all iword calls behind a sync.Mutex.
+// Do NOT call Seek() or Map() from multiple goroutines without locking.
+//
+// The tests below verify correct behavior when a Mutex is used,
+// and document the required locking pattern for igate.
 
-func TestSeekConcurrent(t *testing.T) {
-	// Seek is read-only hash lookup; should be safe concurrently.
+var iwordMu sync.Mutex
+
+func TestSeekConcurrentWithMutex(t *testing.T) {
 	const goroutines = 20
 	var wg sync.WaitGroup
-	errors := make(chan string, goroutines)
+	errors := make(chan string, goroutines*2)
 
 	for i := 0; i < goroutines; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if got := iword.Seek("free"); got != iword.KeySpam {
-				errors <- "Seek returned wrong key under concurrency"
+			iwordMu.Lock()
+			got := iword.Seek("free")
+			iwordMu.Unlock()
+			if got != iword.KeySpam {
+				errors <- "Seek returned wrong key under mutex-protected concurrency"
 			}
-			if got := iword.Seek("notaword_xyz"); got != -1 {
-				errors <- "Seek returned non-(-1) for missing word under concurrency"
+
+			iwordMu.Lock()
+			got = iword.Seek("notaword_xyz")
+			iwordMu.Unlock()
+			if got != -1 {
+				errors <- "Seek returned non-(-1) for missing word under mutex-protected concurrency"
 			}
 		}()
 	}
@@ -198,10 +209,7 @@ func TestSeekConcurrent(t *testing.T) {
 	}
 }
 
-func TestMapConcurrent(t *testing.T) {
-	// Map() uses internal globals (result buffer). Run with -race to detect
-	// data races. igate MUST serialize Map() calls or use one goroutine per
-	// iword.SetDictKey context.
+func TestMapConcurrentWithMutex(t *testing.T) {
 	const goroutines = 10
 	var wg sync.WaitGroup
 	errors := make(chan string, goroutines)
@@ -210,9 +218,11 @@ func TestMapConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			iwordMu.Lock()
 			matches := iword.Map("get free prize now", iword.ModeHTML|iword.ModeForbid)
+			iwordMu.Unlock()
 			if len(matches) == 0 {
-				errors <- "Map returned no matches under concurrency"
+				errors <- "Map returned no matches under mutex-protected concurrency"
 			}
 		}()
 	}
