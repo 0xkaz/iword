@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  # Development environment with all language runtimes
+  dev:
+    build: .
+    image: iword:dev
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    shm_size: '256m'
+    command: bash
+
+  # CI-equivalent test runner (mirrors GitHub Actions build-c job)
+  test-c:
+    build: .
+    image: iword:dev
+    shm_size: '256m'
+    command: >
+      bash -c "
+        cd tool && cp -r ../include/* . &&
+        make clean && make all CFLAGS='-O2 -Wall -Wextra' &&
+        printf 'apple\t9\nspam\t2\n' > /tmp/dict.txt &&
+        ./iwordctl load /tmp/dict.txt &&
+        ./iwordctl seek apple &&
+        ./iwordctl --json seek apple &&
+        ./iwordctl --json status &&
+        ./iwordctl stop &&
+        echo 'C tests passed'
+      "
+
+  # Python binding test
+  test-python:
+    build: .
+    image: iword:dev
+    shm_size: '256m'
+    command: >
+      bash -c "
+        printf 'apple\t9\nspam\t2\nadult_word\t1\n' > /tmp/dict.txt &&
+        bin/iwordctl load /tmp/dict.txt &&
+        python3 bindings/python/test_basic.py &&
+        python3 bindings/python/test_langchain_integration.py &&
+        bin/iwordctl stop &&
+        echo 'Python tests passed'
+      "
+
+  # Go binding test
+  test-go:
+    build: .
+    image: iword:dev
+    shm_size: '256m'
+    command: >
+      bash -c "
+        cd bindings/go &&
+        go build . &&
+        go vet . &&
+        echo 'Go binding build and vet passed'
+      "

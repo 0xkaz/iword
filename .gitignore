@@ -17,3 +17,8 @@ tool/iworduse
 *.o
 *.so
 *.dylib
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

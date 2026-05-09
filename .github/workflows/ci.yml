@@ -115,12 +115,62 @@ jobs:
           fi
 
   # ---------------------------------------------------------------
-  # Job 3: Summary — block merge if C build fails
+  # Job 3: Python binding smoke test
+  # ---------------------------------------------------------------
+  build-python:
+    name: Python binding (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc make python3
+
+      - name: Build C library
+        run: make tool && make lib
+
+      - name: Load dictionary and run binding tests
+        run: |
+          printf "apple\t9\nspam\t2\nadult_word\t1\n" > /tmp/dict.txt
+          bin/iwordctl load /tmp/dict.txt
+          python3 bindings/python/test_basic.py
+          python3 bindings/python/test_langchain_integration.py
+          bin/iwordctl stop
+
+  # ---------------------------------------------------------------
+  # Job 4: Go binding build and vet
+  # ---------------------------------------------------------------
+  build-go:
+    name: Go binding (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc make
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Build C library
+        run: make tool && make lib
+
+      - name: Build and vet Go binding
+        working-directory: bindings/go
+        run: |
+          go build .
+          go vet .
+          echo "Go binding build and vet passed"
+
+  # ---------------------------------------------------------------
+  # Job 5: Summary — block merge if C or binding builds fail
   # ---------------------------------------------------------------
   summary:
     name: Summary
     runs-on: ubuntu-latest
-    needs: [build-c, build-php]
+    needs: [build-c, build-php, build-python, build-go]
     if: always()
     steps:
       - name: Check C build result
@@ -129,5 +179,21 @@ jobs:
             echo "✅ C core build: passed"
           else
             echo "❌ C core build: FAILED"
+            exit 1
+          fi
+      - name: Check Python binding result
+        run: |
+          if [ "${{ needs.build-python.result }}" = "success" ]; then
+            echo "✅ Python binding: passed"
+          else
+            echo "❌ Python binding: FAILED"
+            exit 1
+          fi
+      - name: Check Go binding result
+        run: |
+          if [ "${{ needs.build-go.result }}" = "success" ]; then
+            echo "✅ Go binding: passed"
+          else
+            echo "❌ Go binding: FAILED"
             exit 1
           fi
