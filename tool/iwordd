@@ -1,0 +1,41 @@
+#!/bin/sh
+# iwordd — simple iwordserver supervisor
+#
+# Usage:
+#   bin/iwordd [iwordserver options]
+#
+# Environment:
+#   IWORD_RESTART_DELAY   seconds between restarts (default: 1)
+#
+# Examples:
+#   bin/iwordd -u /tmp/iword.sock -p 0
+#   bin/iwordd -u /tmp/iword.sock -d mydict
+#   IWORD_RESTART_DELAY=5 bin/iwordd -u /tmp/iword.sock
+#
+# As a daemontools run script:
+#   #!/bin/sh
+#   exec bin/iwordd -u /tmp/iword.sock -d mydict
+#
+# As a systemd unit (with Restart=always):
+#   ExecStart=/path/to/bin/iwordd -u /tmp/iword.sock
+
+DELAY=${IWORD_RESTART_DELAY:-1}
+IWORDSERVER="$(dirname "$0")/iwordserver"
+
+if [ ! -x "${IWORDSERVER}" ]; then
+    echo "iwordd: iwordserver not found at ${IWORDSERVER}" >&2
+    exit 1
+fi
+
+echo "iwordd: starting iwordserver $*" >&2
+
+while true; do
+    "${IWORDSERVER}" "$@"
+    code=$?
+    if [ "${code}" -eq 0 ]; then
+        echo "iwordd: iwordserver exited cleanly (code 0), stopping" >&2
+        exit 0
+    fi
+    echo "iwordd: iwordserver exited (code ${code}), restarting in ${DELAY}s" >&2
+    sleep "${DELAY}"
+done

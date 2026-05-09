@@ -33,7 +33,8 @@ _tool: iwordctl iworduse iwordserver iwordtest
 
 iwordtest:
 	-mkdir bin 2>/dev/null
-	-cp tool/iword.php tool/iword.sh tool/iword-speed.php bin
+	-cp tool/iword.php tool/iword.sh tool/iword-speed.php tool/iwordd bin
+	-chmod +x bin/iwordd
 
 iwordctl:
 	-rm -r -f -d temp_ctl
