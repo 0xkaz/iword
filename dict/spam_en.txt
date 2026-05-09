@@ -1,0 +1,66 @@
+# iWord sample spam dictionary (English)
+# Format: word<TAB>key
+# key=2: spam
+# Source: curated from public domain spam keyword lists
+# License: CC0 (public domain)
+# Updated: 2026-05-09
+#
+# Usage:
+#   bin/iwordctl load dict/spam_en.txt
+#   bin/iwordctl seek "free"
+#   python3 tool/iword-grep.py --dict dict/spam_en.txt --key 2 yourfile.txt
+
+free	2
+winner	2
+congratulations	2
+claim	2
+prize	2
+urgent	2
+act now	2
+limited time	2
+offer expires	2
+click here	2
+buy now	2
+order now	2
+subscribe	2
+unsubscribe	2
+casino	2
+lottery	2
+jackpot	2
+earn money	2
+make money	2
+work from home	2
+extra income	2
+passive income	2
+investment opportunity	2
+get rich	2
+million dollars	2
+cash bonus	2
+credit card	2
+loan	2
+mortgage	2
+refinance	2
+debt relief	2
+weight loss	2
+lose weight	2
+diet pill	2
+miracle cure	2
+no risk	2
+100% free	2
+satisfaction guaranteed	2
+money back	2
+spam	2
+bulk email	2
+mass email	2
+opt-in	2
+opt out	2
+unsubscribe here	2
+dear friend	2
+dear customer	2
+this is not spam	2
+not a scam	2
+verify your account	2
+confirm your email	2
+your account has been	2
+suspended	2
+unusual activity	2

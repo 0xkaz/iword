@@ -1,0 +1,45 @@
+# iWord sample profanity/harmful word dictionary (English)
+# Format: word<TAB>key
+# key=1: adult/harmful
+# Source: curated minimal list for demonstration purposes
+# License: CC0 (public domain)
+# Updated: 2026-05-09
+#
+# NOTE: This is a minimal sample (~30 entries) for demonstration.
+# For production use, consider using a comprehensive word list
+# such as the CMU Offensive Word List or profanity-filter libraries.
+#
+# Usage:
+#   bin/iwordctl load dict/profanity_en.txt
+#   python3 tool/iword-grep.py --dict dict/profanity_en.txt --key 1 yourfile.txt
+
+damn	1
+hell	1
+crap	1
+idiot	1
+stupid	1
+moron	1
+jerk	1
+loser	1
+freak	1
+weirdo	1
+creep	1
+scam	1
+fraud	1
+fake	1
+hoax	1
+cheat	1
+liar	1
+thief	1
+criminal	1
+illegal	1
+banned	1
+blocked	1
+violation	1
+abuse	1
+harassment	1
+threat	1
+malware	1
+phishing	1
+hacking	1
+exploit	1
