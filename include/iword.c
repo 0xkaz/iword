@@ -251,7 +251,7 @@ int iword_makelist(char **s, char *f, int size) {
 	// 全ての文字列に対しハッシュ値を生成
 	for (i = num = 0; i < size; ++i) {
 		// 長い文字列の処理
-		char ss[256]; strncpy(ss, s[i], 254);
+		char ss[256]; strncpy(ss, s[i], 255); ss[255] = 0;
 		// 16n文字毎にフラグ値15のハッシュ値を登録する
 		for (j = strlen(s[i]); j = (j - 1) & ~0xf, 0 < j;)
 		 ss[j] = 0, iword_hash(&h[num], ss), h[num++].f = 15;
@@ -308,16 +308,16 @@ int iword_makelist(char **s, char *f, int size) {
 
 // 単語リストのロード
 int iword_load(char *filename) {
-	FILE *fp; int i, j, size, wordcnt; char *data, **list, *f;
-	
+	FILE *fp; long size; int i, j, wordcnt; char *data, **list, *f;
+
 	// ファイルの読み込み
 	if (!(fp = fopen(filename, "r"))) return -1;
 	// ファイルサイズを取得する
 	fseek(fp, 0L, SEEK_END);
 	size = ftell(fp);
 	fseek(fp, 0L, SEEK_SET);
-	// 2GBを超えていないかの確認
-	if (size + 1 <= 0) return -1;
+	// サイズが不正でないかの確認
+	if (size <= 0) return -1;
 	// サイズ分だけ領域を取得
 	data = (char *)malloc(size + 1);
 	// 領域の取得に失敗したら

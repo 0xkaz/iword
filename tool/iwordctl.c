@@ -77,9 +77,11 @@ int main(int argc, char **argv) {
 	if (strcmp(argv[1], "load") == 0) {
 		if (argc < 3) goto usage;
 		if (argc != 3) {
-			int q = 9, p = 2; FILE *fw = fopen("/tmp/iword.tmp", "w");
-			if (!fw) {
-				printf("Error: %s is not writable.\n", "/tmp/iword.tmp");
+			int q = 9, p = 2; FILE *fw;
+			char tmppath[] = "/tmp/iword.XXXXXX";
+			int tmpfd = mkstemp(tmppath);
+			if (tmpfd == -1 || !(fw = fdopen(tmpfd, "w"))) {
+				printf("Error: failed to create temporary file.\n");
 				return 1;
 			}
 			for (; p < argc; p++) if (argv[p][0] == '-') {
@@ -103,7 +105,7 @@ int main(int argc, char **argv) {
 				fputc('\n', fw);
 			}
 			fclose(fw);
-			argv[2] = "/tmp/iword.tmp";
+			argv[2] = tmppath;
 		}
 		fp = fopen(argv[2], "r");
 		if (!fp) {
