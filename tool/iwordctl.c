@@ -100,12 +100,22 @@ int main(int argc, char **argv) {
 		if (argc != 2) goto usage;
 		ol = (unsigned int *)iword_data();
 		if (ol == NULL) {
-			printf("No data to view.\n");
+			if (json_mode) printf("{\"loaded\":false}\n");
+			else printf("No data to view.\n");
 			return 0;
 		}
 		size = (int)((ol[*ol] >> 8) + (ol[*ol] & 255) + 1) * 8;
-		for (i = 0; i < size / 4; i += 2) {
-			printf("%08x %08x\n", ol[i], ol[i + 1]);
+		if (json_mode) {
+			printf("[");
+			for (i = 0; i < size / 4; i += 2) {
+				if (i > 0) printf(",");
+				printf("[%u,%u]", ol[i], ol[i + 1]);
+			}
+			printf("]\n");
+		} else {
+			for (i = 0; i < size / 4; i += 2) {
+				printf("%08x %08x\n", ol[i], ol[i + 1]);
+			}
 		}
 		return 0;
 	}

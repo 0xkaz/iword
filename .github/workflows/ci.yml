@@ -173,6 +173,13 @@ jobs:
           bin/iwordctl load /tmp/dict.txt
           python3 bindings/python/test_basic.py
           python3 bindings/python/test_langchain_integration.py
+          SOCK=/tmp/iword-py-$$.sock
+          bin/iwordserver -u "${SOCK}" -p 0 &
+          SERVER_PID=$!
+          sleep 1
+          IWORD_SERVER_SOCK="${SOCK}" python3 bindings/python/test_server.py
+          kill "${SERVER_PID}" || true
+          rm -f "${SOCK}"
           bin/iwordctl stop
 
   # ---------------------------------------------------------------
