@@ -39,6 +39,7 @@ services:
         printf 'apple\t9\nspam\t2\nadult_word\t1\n' > /tmp/dict.txt &&
         bin/iwordctl load /tmp/dict.txt &&
         python3 bindings/python/test_basic.py &&
+        python3 bindings/python/test_langchain_integration.py &&
         bin/iwordctl stop &&
         echo 'Python tests passed'
       "
