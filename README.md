@@ -157,7 +157,7 @@ echo '{"op":"map","text":"get free prize now","mode":3}' | nc -U /tmp/iword.sock
 # other ops: ping, mask, status
 ```
 
-See [`_iword-server-spec-en.md`](_iword-server-spec-en.md) for the full protocol specification.
+See [`iword-server-spec.md`](iword-server-spec.md) for the full protocol specification.
 
 ## PHP Extension
 
