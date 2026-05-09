@@ -253,6 +253,13 @@ jobs:
           printf "free\t2\nspam\t2\nprize\t2\nadult_word\t1\napple\t9\n" > /tmp/dict.txt
           bin/iwordctl load /tmp/dict.txt
           node bindings/node/test_basic.js
+          SOCK=/tmp/iword-node-$$.sock
+          bin/iwordserver -u "${SOCK}" -p 0 &
+          SERVER_PID=$!
+          sleep 1
+          IWORD_SERVER_SOCK="${SOCK}" node bindings/node/test_server.js
+          kill "${SERVER_PID}" || true
+          rm -f "${SOCK}"
           bin/iwordctl stop
 
   # ---------------------------------------------------------------
