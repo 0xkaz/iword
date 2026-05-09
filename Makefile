@@ -11,6 +11,12 @@ lib: _lib
 _lib:
 	-mkdir bin 2>/dev/null
 	$(CC) $(CFLAGS) -shared -fPIC -o bin/libiword.so include/iword.c
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		$(CC) $(CFLAGS) -shared -fPIC -dynamiclib \
+			-install_name @rpath/libiword.dylib \
+			-o bin/libiword.dylib include/iword.c; \
+		echo "Built bin/libiword.dylib (macOS)"; \
+	fi
 	@echo "Built bin/libiword.so (for Python/Go/Node bindings)"
 
 pecl: _pecl

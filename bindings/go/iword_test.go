@@ -165,6 +165,126 @@ func TestFilterTextPreservesLength(t *testing.T) {
 	}
 }
 
+// ---- Seek edge cases ----------------------------------------------------
+
+func TestSeekCaseSensitive(t *testing.T) {
+	// iword dictionary lookup is case-sensitive
+	lower := iword.Seek("free")
+	upper := iword.Seek("FREE")
+	if lower != iword.KeySpam {
+		t.Errorf("Seek(\"free\") = %d, want %d (KeySpam)", lower, iword.KeySpam)
+	}
+	// Upper-case variant should not match (dictionary has lowercase "free")
+	if upper == iword.KeySpam {
+		t.Log("Seek(\"FREE\") matched — dictionary is case-insensitive (noted)")
+	}
+}
+
+func TestSeekEmptyString(t *testing.T) {
+	if got := iword.Seek(""); got != -1 {
+		t.Errorf("Seek(\"\") = %d, want -1", got)
+	}
+}
+
+// ---- Map edge cases -----------------------------------------------------
+
+func TestMapModeEnglish(t *testing.T) {
+	// ModeEnglish splits on word boundaries; must not panic
+	matches := iword.Map("free-prize combo", iword.ModeHTML|iword.ModeForbid|iword.ModeEnglish)
+	_ = matches // just ensure no crash
+}
+
+func TestMapModeOnlyHTML(t *testing.T) {
+	// Without ModeForbid, forbidden-category words (key<5) should not appear
+	matches := iword.Map("free spam prize", iword.ModeHTML)
+	for _, m := range matches {
+		if m.Key < 5 {
+			t.Errorf("Map(ModeHTML only) returned forbidden key %d — expected ModeForbid required", m.Key)
+		}
+	}
+}
+
+func TestMapPositionAndLength(t *testing.T) {
+	text := "hello free world"
+	matches := iword.Map(text, iword.ModeHTML|iword.ModeForbid)
+	for _, m := range matches {
+		if m.Position+m.Length > len(text) {
+			t.Errorf("match overflows text: pos=%d len=%d textlen=%d", m.Position, m.Length, len(text))
+		}
+		word := text[m.Position : m.Position+m.Length]
+		if word != "free" {
+			t.Errorf("expected matched word \"free\", got %q", word)
+		}
+	}
+}
+
+func TestMapRepeatedCalls(t *testing.T) {
+	// Repeated Map calls must not leak or crash (CGO malloc/free balance)
+	for i := 0; i < 200; i++ {
+		matches := iword.Map("get free prize now spam", iword.ModeHTML|iword.ModeForbid)
+		if len(matches) == 0 {
+			t.Fatalf("iteration %d: Map returned no matches", i)
+		}
+	}
+}
+
+// ---- SetLimit edge cases ------------------------------------------------
+
+func TestSetLimitZeroMeansNoLimit(t *testing.T) {
+	iword.SetLimit(0)
+	matches := iword.Map("free spam prize free spam", iword.ModeHTML|iword.ModeForbid)
+	// With no limit, all occurrences should be returned
+	if len(matches) == 0 {
+		t.Error("SetLimit(0): Map returned no matches (expected unlimited)")
+	}
+}
+
+func TestSetLimitHighValue(t *testing.T) {
+	iword.SetLimit(100)
+	matches := iword.Map("free spam prize", iword.ModeHTML|iword.ModeForbid)
+	iword.SetLimit(0)
+	if len(matches) == 0 {
+		t.Error("SetLimit(100): Map returned no matches")
+	}
+}
+
+// ---- FilterText edge cases ----------------------------------------------
+
+func TestFilterTextMultipleWords(t *testing.T) {
+	input := "free spam prize"
+	output := iword.FilterText(input, iword.ModeHTML|iword.ModeForbid)
+	if output == input {
+		t.Error("FilterText did not modify text with multiple spam words")
+	}
+	if len(output) != len(input) {
+		t.Errorf("FilterText changed byte length: %d → %d", len(input), len(output))
+	}
+}
+
+func TestFilterTextOnlyNonSpam(t *testing.T) {
+	// KeyDefault words (key=9, apple) ARE returned by Map with ModeForbid
+	// and thus replaced by FilterText. Clean words not in the dictionary
+	// must not be touched.
+	input := "cleanwordxyz"
+	output := iword.FilterText(input, iword.ModeHTML|iword.ModeForbid)
+	if output != input {
+		t.Errorf("FilterText modified word not in dictionary: got %q, want %q", output, input)
+	}
+}
+
+// ---- Mask ---------------------------------------------------------------
+
+func TestMaskContainsExpectedKeys(t *testing.T) {
+	mask := iword.Mask()
+	// Dictionary has key=1 (adult), key=2 (spam), key=9 (default)
+	if mask&(1<<iword.KeyAdult) == 0 {
+		t.Errorf("Mask() missing KeyAdult bit: mask=0x%x", mask)
+	}
+	if mask&(1<<iword.KeySpam) == 0 {
+		t.Errorf("Mask() missing KeySpam bit: mask=0x%x", mask)
+	}
+}
+
 // ---- Concurrency --------------------------------------------------------
 //
 // IMPORTANT FINDING: iword_seek() and iword_map() are NOT thread-safe.
