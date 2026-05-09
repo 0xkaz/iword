@@ -86,6 +86,22 @@ See [`bindings/python/example_rag.py`](bindings/python/example_rag.py) for RAG p
 
 ## Node.js Binding
 
+Two integration paths are available:
+
+**iwordserver client (recommended)** — connects to a running `iwordserver` via Unix socket or TCP. No native addon, no build step.
+
+```javascript
+const { Client } = require('./bindings/node/iwordserver');
+
+const c = await Client.unix('/tmp/iword.sock');
+const key     = await c.seek('spam_word');                 // -1 if not found
+const matches = await c.map(text, c.MODE_HTML | c.MODE_FORBID);
+const clean   = await c.filterText(text);
+await c.close();
+```
+
+**N-API native addon (performance-critical only)** — calls iword C library in-process via native addon. Requires build step.
+
 ```javascript
 const iword = require('./bindings/node');
 
@@ -95,7 +111,7 @@ const matches = iword.map(text, iword.MODE_HTML | iword.MODE_FORBID);
 const clean   = iword.filterText(text, iword.MODE_HTML | iword.MODE_FORBID);
 ```
 
-**Requirements:** `make lib && npm run build` in `bindings/node/` (builds N-API native addon).
+**Requirements:** iwordserver client needs no build. N-API addon requires `make lib && npm run build` in `bindings/node/`.
 
 ## Go Binding
 
