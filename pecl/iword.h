@@ -21,7 +21,7 @@ const zend_function_entry iword_functions[] = {
 	PHP_FE(iword_get_spam, NULL)
 	PHP_FE(iword_get_adult, NULL)
 	PHP_FE(iword_exists, NULL)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /*
@@ -57,8 +57,8 @@ ZEND_GET_MODULE(iword)
 
 // マップ用メモリの初期化
 void iword_initialize() {
-	if (!imap_g) free(imap_g), imap_g = NULL;
-	if (!str_g) free(str_g), str_g = NULL, str_len_g = 0;
+	if (imap_g) free(imap_g), imap_g = NULL;
+	if (str_g) free(str_g), str_g = NULL, str_len_g = 0;
 }
 
 PHP_RINIT_FUNCTION(iword)
