@@ -115,7 +115,7 @@ int iword_len() {
 int iword_mask() {
 	unsigned int *ol; int mask;
 	// 初期化
-	if (iword_alloc()) return NULL;
+	if (iword_alloc()) return 0;
 	// iWordオブジェクトを取得
 	ol = (unsigned int *)iword_object;
 	// マスクを取得
@@ -408,10 +408,10 @@ char* iword_prei(char *s1, char *s2) {
 }
 
 // 文字が単語としてあり得るか
-inline int iword_ischar(char a) {
+static inline int iword_ischar(char a) {
 	// 英数字であれば
-	if ('a' <= a && a <= 'z' || 'A' <= a && a <= 'Z' ||
-	 '0' <= a && a <= '9' || a == '_' || a == '@') return 1;
+	if (('a' <= a && a <= 'z') || ('A' <= a && a <= 'Z') ||
+	 ('0' <= a && a <= '9') || a == '_' || a == '@') return 1;
 	// さもなくばfalseを返す
 	return 0;
 }
@@ -511,7 +511,7 @@ long long *iword_map(char *s, int size, int mode) {
 			 if (s[i] == '"') for (i++; i < size && s[i] != '"'; i++);
 			 else if (s[i] == '\'') for (i++; i < size && s[i] != '\''; i++);
 			// キープされていれば次のタグの手前までポインタを進める
-			if (keep) { for (; i < size && s[i] != '<'; i++); i--; }
+			if (keep) { for (; i < size && s[i] != '<'; i++) {} i--; }
 			// 次に進む
 			continue;
 		}

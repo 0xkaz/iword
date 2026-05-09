@@ -1,1 +1,19 @@
 _*.md
+
+# Build artifacts
+bin/
+temp_pecl/
+temp_ctl/
+temp_use/
+
+# Copied headers/sources (created by make tool)
+tool/iword.c
+tool/iword.h
+tool/iword.o
+tool/iwordctl
+tool/iworduse
+
+# Object files
+*.o
+*.so
+*.dylib
