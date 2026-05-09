@@ -8,7 +8,6 @@ services:
     volumes:
       - .:/workspace
     working_dir: /workspace
-    # SHM size for iWord dictionary (adjust based on dictionary size)
     shm_size: '256m'
     command: bash
 
@@ -27,7 +26,7 @@ services:
         ./iwordctl --json seek apple &&
         ./iwordctl --json status &&
         ./iwordctl stop &&
-        echo 'All tests passed'
+        echo 'C tests passed'
       "
 
   # Python binding test
@@ -37,7 +36,22 @@ services:
     shm_size: '256m'
     command: >
       bash -c "
+        printf 'apple\t9\nspam\t2\nadult_word\t1\n' > /tmp/dict.txt &&
         bin/iwordctl load /tmp/dict.txt &&
-        python3 bindings/python/example_rag.py &&
-        bin/iwordctl stop
+        python3 bindings/python/test_basic.py &&
+        bin/iwordctl stop &&
+        echo 'Python tests passed'
+      "
+
+  # Go binding test
+  test-go:
+    build: .
+    image: iword:dev
+    shm_size: '256m'
+    command: >
+      bash -c "
+        cd bindings/go &&
+        go build . &&
+        go vet . &&
+        echo 'Go binding build and vet passed'
       "
