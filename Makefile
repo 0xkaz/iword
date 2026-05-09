@@ -1,13 +1,17 @@
 CC = gcc
 CFLAGS = -O2
 
-all: _pecl _tool
+# Default: build CLI tools + shared library (needed by Python/Go/Node bindings)
+all: _tool _lib
+
+# Full build including PHP PECL extension (requires phpize)
+full: _tool _lib _pecl
 
 lib: _lib
 _lib:
 	-mkdir bin 2>/dev/null
 	$(CC) $(CFLAGS) -shared -fPIC -o bin/libiword.so include/iword.c
-	@echo "Built bin/libiword.so (for Python/Go ctypes bindings)"
+	@echo "Built bin/libiword.so (for Python/Go/Node bindings)"
 
 pecl: _pecl
 _pecl:
@@ -45,8 +49,23 @@ iworduse:
 	-cp temp_use/iwordctl temp_use/iworduse bin
 	-rm -r -f -d temp_use
 
+# Python binding: no build step needed (ctypes loads libiword.so directly)
+python: _lib
+	@echo "Python binding ready. Run: python3 bindings/python/test_basic.py"
+
+# Go binding
+go: _lib
+	cd bindings/go && go build . && go vet .
+	@echo "Go binding built."
+
+# Node.js binding (N-API addon)
+node: _lib
+	cd bindings/node && npm run build
+	@echo "Node.js binding built."
+
 clean:
 	-rm -r -f -d bin
+	-rm -r -f -d bindings/node/build
 
 install:
 	cp bin/iwordctl /usr/local/bin
